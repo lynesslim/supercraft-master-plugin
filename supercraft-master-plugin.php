@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.5
+ * Version:     1.0.6
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.5');
+define('SCMP_VERSION', '1.0.6');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -48,6 +48,10 @@ function scmp_ajax_supervault_proxy() {
 
     if (!current_user_can('edit_posts')) {
         wp_send_json_error(['message' => 'Insufficient permissions.']);
+    }
+
+    if (!scmp_is_validated()) {
+        wp_send_json_error(['message' => 'License validation required to access SuperVault.']);
     }
 
     $action_type = isset($_POST['action_type']) ? sanitize_text_field(wp_unslash($_POST['action_type'])) : '';
@@ -170,6 +174,10 @@ function scmp_ajax_push_to_supervault() {
         wp_send_json_error(['message' => 'Insufficient permissions.']);
     }
 
+    if (!scmp_is_validated()) {
+        wp_send_json_error(['message' => 'License validation required to push to SuperVault.']);
+    }
+
     $title         = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
     $preview_image = isset($_POST['preview_image']) ? esc_url_raw(wp_unslash($_POST['preview_image'])) : '';
     $categories    = isset($_POST['categories']) ? array_map('sanitize_text_field', wp_unslash($_POST['categories'])) : [];
@@ -253,6 +261,13 @@ add_filter('supercraft_is_plugin_validated', function ($is_valid, $plugin_slug) 
     }
     return $is_valid;
 }, 10, 2);
+
+function scmp_is_validated() {
+    if (defined('SUPERCRAFT_ALLOW_UNVALIDATED') && SUPERCRAFT_ALLOW_UNVALIDATED) {
+        return true;
+    }
+    return get_option('supercraft_master_validation_status', 'not_set') === 'valid';
+}
 
 // ── Plugin Definitions ───────────────────────────────────────────────
 
@@ -564,11 +579,19 @@ function scmp_render_dashboard() {
                             <?php if (!$is_installed) : ?>
                                 <span class="scmp-status-dot missing"></span>
                                 <span class="scmp-status-text">Not Installed</span>
-                                <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Install &amp; Activate</button>
+                                <?php if (scmp_is_validated()) : ?>
+                                    <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Install &amp; Activate</button>
+                                <?php else : ?>
+                                    <span style="font-size: 11px; color: #666; margin-left: 10px;">(Validation Required)</span>
+                                <?php endif; ?>
                             <?php elseif (!$is_active) : ?>
                                 <span class="scmp-status-dot loading"></span>
                                 <span class="scmp-status-text">Installed (Inactive)</span>
-                                <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Activate</button>
+                                <?php if (scmp_is_validated()) : ?>
+                                    <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Activate</button>
+                                <?php else : ?>
+                                    <span style="font-size: 11px; color: #666; margin-left: 10px;">(Validation Required)</span>
+                                <?php endif; ?>
                             <?php else : ?>
                                 <span class="scmp-status-dot installed"></span>
                                 <span class="scmp-status-text">Active</span>
@@ -642,6 +665,10 @@ function scmp_ajax_install_plugin() {
 
     if (!current_user_can('install_plugins')) {
         wp_send_json_error(['message' => 'Insufficient permissions.']);
+    }
+
+    if (!scmp_is_validated()) {
+        wp_send_json_error(['message' => 'License validation required to install plugins.']);
     }
 
     $slug = isset($_POST['slug']) ? sanitize_text_field(wp_unslash($_POST['slug'])) : '';
