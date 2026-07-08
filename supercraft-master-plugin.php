@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.6
+ * Version:     1.0.7
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.6');
+define('SCMP_VERSION', '1.0.7');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -30,6 +30,9 @@ if (file_exists(SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.p
 
 add_action('elementor/editor/after_enqueue_scripts', 'scmp_enqueue_editor_assets');
 function scmp_enqueue_editor_assets() {
+    if (!scmp_is_validated()) {
+        return;
+    }
     wp_enqueue_style('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.css', [], SCMP_VERSION);
     wp_enqueue_script('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.js', ['jquery'], SCMP_VERSION, true);
 
@@ -552,57 +555,59 @@ function scmp_render_dashboard() {
             <?php endif; ?>
         </div>
 
-        <h2>Installed Plugins</h2>
-        <table class="wp-list-table widefat fixed striped">
-            <thead>
-                <tr>
-                    <th>Plugin</th>
-                    <th>Status</th>
-                    <th>Source</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $all = array_merge(scmp_get_premium_plugins(), scmp_get_wpdotorg_plugins());
-                foreach ($all as $slug => $info) :
-                    $name = is_array($info) ? $info['name'] : $info;
-                    $source = is_array($info) ? $info['source'] : 'wordpress.org';
-                    
-                    $plugin_file = scmp_is_plugin_installed($slug);
-                    $is_installed = $plugin_file ? true : false;
-                    $is_active = $plugin_file ? is_plugin_active($plugin_file) : false;
-                ?>
-                <tr>
-                    <td><?php echo esc_html($name); ?></td>
-                    <td>
-                        <div class="scmp-status-container" id="scmp-status-<?php echo esc_attr($slug); ?>">
-                            <?php if (!$is_installed) : ?>
-                                <span class="scmp-status-dot missing"></span>
-                                <span class="scmp-status-text">Not Installed</span>
-                                <?php if (scmp_is_validated()) : ?>
-                                    <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Install &amp; Activate</button>
+        <?php if (scmp_is_validated()) : ?>
+            <h2>Installed Plugins</h2>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>Plugin</th>
+                        <th>Status</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $all = array_merge(scmp_get_premium_plugins(), scmp_get_wpdotorg_plugins());
+                    foreach ($all as $slug => $info) :
+                        $name = is_array($info) ? $info['name'] : $info;
+                        $source = is_array($info) ? $info['source'] : 'wordpress.org';
+                        
+                        $plugin_file = scmp_is_plugin_installed($slug);
+                        $is_installed = $plugin_file ? true : false;
+                        $is_active = $plugin_file ? is_plugin_active($plugin_file) : false;
+                    ?>
+                    <tr>
+                        <td><?php echo esc_html($name); ?></td>
+                        <td>
+                            <div class="scmp-status-container" id="scmp-status-<?php echo esc_attr($slug); ?>">
+                                <?php if (!$is_installed) : ?>
+                                    <span class="scmp-status-dot missing"></span>
+                                    <span class="scmp-status-text">Not Installed</span>
+                                    <?php if (scmp_is_validated()) : ?>
+                                        <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Install &amp; Activate</button>
+                                    <?php else : ?>
+                                        <span style="font-size: 11px; color: #666; margin-left: 10px;">(Validation Required)</span>
+                                    <?php endif; ?>
+                                <?php elseif (!$is_active) : ?>
+                                    <span class="scmp-status-dot loading"></span>
+                                    <span class="scmp-status-text">Installed (Inactive)</span>
+                                    <?php if (scmp_is_validated()) : ?>
+                                        <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Activate</button>
+                                    <?php else : ?>
+                                        <span style="font-size: 11px; color: #666; margin-left: 10px;">(Validation Required)</span>
+                                    <?php endif; ?>
                                 <?php else : ?>
-                                    <span style="font-size: 11px; color: #666; margin-left: 10px;">(Validation Required)</span>
+                                    <span class="scmp-status-dot installed"></span>
+                                    <span class="scmp-status-text">Active</span>
                                 <?php endif; ?>
-                            <?php elseif (!$is_active) : ?>
-                                <span class="scmp-status-dot loading"></span>
-                                <span class="scmp-status-text">Installed (Inactive)</span>
-                                <?php if (scmp_is_validated()) : ?>
-                                    <button class="button button-small scmp-dash-install" data-slug="<?php echo esc_attr($slug); ?>" style="margin-left: 10px;">Activate</button>
-                                <?php else : ?>
-                                    <span style="font-size: 11px; color: #666; margin-left: 10px;">(Validation Required)</span>
-                                <?php endif; ?>
-                            <?php else : ?>
-                                <span class="scmp-status-dot installed"></span>
-                                <span class="scmp-status-text">Active</span>
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                    <td><?php echo esc_html($source); ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                            </div>
+                        </td>
+                        <td><?php echo esc_html($source); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
     </div>
     <?php
 }
