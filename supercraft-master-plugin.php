@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.1');
+define('SCMP_VERSION', '1.0.2');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -541,8 +541,8 @@ function scmp_ajax_verify_license() {
         wp_send_json_error(['message' => 'License key is required.']);
     }
 
-    $endpoint = defined('SUPERCRAFT_VALIDATION_ENDPOINT') ? SUPERCRAFT_VALIDATION_ENDPOINT : 'https://superapp.supercraft.my/api/public/check-license';
-    $plugin_name = defined('SUPERCRAFT_PLUGIN_NAME') ? SUPERCRAFT_PLUGIN_NAME : 'supercraft-master-plugin';
+    $endpoint = defined('SUPERCRAFT_MASTER_VALIDATION_ENDPOINT') ? SUPERCRAFT_MASTER_VALIDATION_ENDPOINT : 'https://superapp.supercraft.my/api/public/check-license';
+    $plugin_name = defined('SUPERCRAFT_MASTER_PLUGIN_NAME') ? SUPERCRAFT_MASTER_PLUGIN_NAME : 'supercraft-master-plugin';
 
     $response = wp_remote_post($endpoint, [
         'timeout' => 15,
