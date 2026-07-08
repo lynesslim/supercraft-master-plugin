@@ -17,11 +17,13 @@ define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 // ── GitHub Auto-Update Checker ─────────────────────────────────────────
-add_action('init', 'scmp_init_updater');
-function scmp_init_updater() {
-    if (class_exists('SCMP_GitHub_Updater')) {
-        new SCMP_GitHub_Updater(__FILE__, 'lynesslim', 'supercraft-master-plugin');
-    }
+if (file_exists(SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.php')) {
+    require_once SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.php';
+    $scmp_update_checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/lynesslim/supercraft-master-plugin/',
+        __FILE__,
+        'supercraft-master-plugin'
+    );
 }
 
 // ── Elementor Editor Assets ───────────────────────────────────────────
@@ -723,139 +725,3 @@ function scmp_ajax_install_plugin() {
 
     wp_send_json_error(['message' => "Unknown plugin slug: $slug"]);
 }
-
-// ── SCMP GitHub Updater Class ─────────────────────────────────────────
-class SCMP_GitHub_Updater {
-    private $slug;
-    private $plugin_file;
-    private $username;
-    private $repo;
-    private $github_response;
-
-    public function __construct($plugin_file, $username, $repo) {
-        $this->plugin_file = $plugin_file;
-        $this->username = $username;
-        $this->repo = $repo;
-        $this->slug = dirname(plugin_basename($plugin_file));
-
-        add_filter('site_transient_update_plugins', [$this, 'check_update']);
-        add_filter('transient_update_plugins', [$this, 'check_update']);
-        add_filter('plugins_api', [$this, 'plugin_popup_info'], 20, 3);
-        add_filter('upgrader_post_install', [$this, 'post_install'], 10, 3);
-    }
-
-    private function get_repository_info() {
-        if (!is_null($this->github_response)) {
-            return $this->github_response;
-        }
-
-        $url = "https://api.github.com/repos/{$this->username}/{$this->repo}/releases/latest";
-        
-        $response = wp_remote_get($url, [
-            'timeout' => 10,
-            'headers' => [
-                'Accept' => 'application/vnd.github.v3+json',
-                'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_bloginfo('url')
-            ]
-        ]);
-
-        if (is_wp_error($response)) {
-            return false;
-        }
-
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-
-        if (empty($data) || isset($data['message'])) {
-            return false;
-        }
-
-        $this->github_response = $data;
-        return $data;
-    }
-
-    public function check_update($transient) {
-        if (empty($transient->checked)) {
-            return $transient;
-        }
-
-        $repo_info = $this->get_repository_info();
-        if (!$repo_info) {
-            return $transient;
-        }
-
-        $current_version = $transient->checked[plugin_basename($this->plugin_file)];
-        $latest_version = ltrim($repo_info['tag_name'], 'v');
-
-        if (version_compare($current_version, $latest_version, '<')) {
-            $obj = new stdClass();
-            $obj->slug = $this->slug;
-            $obj->plugin = plugin_basename($this->plugin_file);
-            $obj->new_version = $latest_version;
-            $obj->published_date = $repo_info['published_at'];
-            $obj->url = "https://github.com/{$this->username}/{$this->repo}";
-            $obj->package = $repo_info['zipball_url'];
-            
-            $transient->response[plugin_basename($this->plugin_file)] = $obj;
-        }
-
-        return $transient;
-    }
-
-    public function plugin_popup_info($result, $action, $args) {
-        if ($action !== 'plugin_information') {
-            return $result;
-        }
-
-        if ($args->slug !== $this->slug) {
-            return $result;
-        }
-
-        $repo_info = $this->get_repository_info();
-        if (!$repo_info) {
-            return $result;
-        }
-
-        $res = new stdClass();
-        $res->name = 'Supercraft Master Plugin';
-        $res->slug = $this->slug;
-        $res->version = ltrim($repo_info['tag_name'], 'v');
-        $res->author = '<a href="https://supercraft.my">Supercraft</a>';
-        $res->homepage = "https://github.com/{$this->username}/{$this->repo}";
-        $res->download_link = $repo_info['zipball_url'];
-        $res->sections = [
-            'description' => 'Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.',
-            'changelog' => isset($repo_info['body']) ? nl2br(esc_html($repo_info['body'])) : 'Latest release.'
-        ];
-
-        return $res;
-    }
-
-    public function post_install($true, $hook_extra, $result) {
-        $plugin = isset($hook_extra['plugin']) ? $hook_extra['plugin'] : '';
-        if (plugin_basename($this->plugin_file) === $plugin) {
-            global $wp_filesystem;
-            $correct_destination = WP_PLUGIN_DIR . '/' . $this->slug;
-            $destination = $result['destination'];
-            
-            if ($destination !== $correct_destination) {
-                if ($wp_filesystem->exists($correct_destination)) {
-                    $wp_filesystem->delete($correct_destination, true);
-                }
-                $wp_filesystem->move($destination, $correct_destination);
-                
-                $result['destination'] = $correct_destination;
-                $result['local_destination'] = $correct_destination;
-                $result['remote_destination'] = $correct_destination;
-                $result['destination_name'] = $this->slug;
-                
-                if (!function_exists('activate_plugin')) {
-                    require_once ABSPATH . 'wp-admin/includes/plugin.php';
-                }
-                activate_plugin(plugin_basename($this->plugin_file));
-            }
-        }
-        return $result;
-    }
-}
-
