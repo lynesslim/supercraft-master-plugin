@@ -13,34 +13,38 @@
                 '</div>' +
                 '<div class="scmp-modal-body">' +
                     '<form id="scmp-publish-form">' +
-                        '<div class="scmp-publish-field">' +
-                            '<label for="scmp-publish-title">Title</label>' +
-                            '<input type="text" id="scmp-publish-title" class="scmp-publish-input" placeholder="Element title" required />' +
-                        '</div>' +
-                        '<div class="scmp-publish-field">' +
-                            '<label for="scmp-publish-image">Preview Image</label>' +
-                            '<div class="scmp-publish-image-row">' +
-                                '<input type="text" id="scmp-publish-image" class="scmp-publish-input" placeholder="Select or enter image URL" />' +
-                                '<button type="button" id="scmp-publish-image-btn" class="scmp-publish-image-btn">Select</button>' +
+                        '<div class="scmp-publish-col">' +
+                            '<div class="scmp-publish-field">' +
+                                '<label for="scmp-publish-title">Title</label>' +
+                                '<input type="text" id="scmp-publish-title" class="scmp-publish-input" placeholder="Element title" required />' +
                             '</div>' +
-                            '<div id="scmp-publish-image-preview" class="scmp-publish-image-preview" style="display:none;"></div>' +
+                            '<div class="scmp-publish-field">' +
+                                '<label for="scmp-publish-image">Preview Image</label>' +
+                                '<div class="scmp-publish-image-row">' +
+                                    '<input type="text" id="scmp-publish-image" class="scmp-publish-input" placeholder="Select or enter image URL" />' +
+                                    '<button type="button" id="scmp-publish-image-btn" class="scmp-publish-image-btn">Select</button>' +
+                                '</div>' +
+                                '<div id="scmp-publish-image-preview" class="scmp-publish-image-preview" style="display:none;"></div>' +
+                            '</div>' +
                         '</div>' +
-                        '<div class="scmp-publish-field">' +
-                            '<label>Categories</label>' +
-                            '<div id="scmp-publish-categories-list" class="scmp-publish-categories-list"></div>' +
-                            '<input type="text" id="scmp-publish-new-category" class="scmp-publish-input" placeholder="Or create new category" />' +
+                        '<div class="scmp-publish-col">' +
+                            '<div class="scmp-publish-field">' +
+                                '<label>Categories</label>' +
+                                '<div id="scmp-publish-categories-list" class="scmp-publish-categories-list"></div>' +
+                                '<input type="text" id="scmp-publish-new-category" class="scmp-publish-input" placeholder="Or create new category" />' +
+                            '</div>' +
+                            '<div class="scmp-publish-field">' +
+                                '<label>Tags</label>' +
+                                '<div id="scmp-publish-tags-list" class="scmp-publish-checkbox-list"></div>' +
+                                '<input type="text" id="scmp-publish-new-tags" class="scmp-publish-input" placeholder="Or create new tags (comma-separated)" />' +
+                            '</div>' +
+                            '<div class="scmp-publish-field">' +
+                                '<label>Requirements</label>' +
+                                '<div id="scmp-publish-reqs-list" class="scmp-publish-checkbox-list"></div>' +
+                                '<input type="text" id="scmp-publish-new-reqs" class="scmp-publish-input" placeholder="Or create new requirements (comma-separated)" />' +
+                            '</div>' +
                         '</div>' +
-                        '<div class="scmp-publish-field">' +
-                            '<label>Tags</label>' +
-                            '<div id="scmp-publish-tags-list" class="scmp-publish-checkbox-list"></div>' +
-                            '<input type="text" id="scmp-publish-new-tags" class="scmp-publish-input" placeholder="Or create new tags (comma-separated)" />' +
-                        '</div>' +
-                        '<div class="scmp-publish-field">' +
-                            '<label>Requirements</label>' +
-                            '<div id="scmp-publish-reqs-list" class="scmp-publish-checkbox-list"></div>' +
-                            '<input type="text" id="scmp-publish-new-reqs" class="scmp-publish-input" placeholder="Or create new requirements (comma-separated)" />' +
-                        '</div>' +
-                        '<div id="scmp-publish-message" class="scmp-publish-message" style="display:none;"></div>' +
+                        '<div id="scmp-publish-message" class="scmp-publish-message" style="display:none; grid-column: span 2;"></div>' +
                     '</form>' +
                 '</div>' +
                 '<div class="scmp-modal-footer scmp-publish-footer">' +
