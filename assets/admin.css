@@ -1,0 +1,267 @@
+.scmp-onboarding {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.scmp-onboarding-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 48px 40px;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+}
+
+.scmp-steps-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+}
+
+.scmp-step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #888;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.scmp-step-badge.active {
+    background: #2271b1;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(34,113,177,0.2);
+}
+
+.scmp-step-line {
+    width: 60px;
+    height: 3px;
+    background: #e0e0e0;
+    margin: 0 8px;
+    border-radius: 2px;
+}
+
+.scmp-step-badge.active + .scmp-step-line {
+    background: #2271b1;
+}
+
+.scmp-step h1 {
+    font-size: 28px;
+    margin-bottom: 12px;
+    color: #1d2327;
+}
+
+.scmp-step p {
+    font-size: 15px;
+    color: #50575e;
+    margin-bottom: 28px;
+}
+
+#scmp-license-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+#scmp-license-form input {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px 16px;
+    font-size: 15px;
+    border: 2px solid #c3c4c7;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+
+#scmp-license-form input:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.scmp-message {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.scmp-message.success {
+    background: #edfaef;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.scmp-message.error {
+    background: #fbe9e7;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.scmp-plugin-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    text-align: left;
+}
+
+.scmp-plugin-list li {
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background: #f6f7f7;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.scmp-plugin-list li .dashicons {
+    margin-right: 6px;
+}
+
+.scmp-plugin-list li.done {
+    background: #edfaef;
+    color: #2e7d32;
+}
+
+.scmp-plugin-list li.fail {
+    background: #fbe9e7;
+    color: #c62828;
+}
+
+.scmp-plugin-list li.loading {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.scmp-progress-bar-wrapper {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 16px 0 8px;
+}
+
+.scmp-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #43a047);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+#scmp-progress-text {
+    font-size: 13px;
+    color: #646970;
+    margin: 8px 0 0;
+}
+
+/* Plugin Selection (Step 2) */
+
+.scmp-plugin-category {
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.scmp-plugin-category h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #1d2327;
+}
+
+.scmp-plugin-checkbox {
+    display: block;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: #f6f7f7;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.scmp-plugin-checkbox:hover {
+    background: #e8eaeb;
+}
+
+.scmp-plugin-checkbox input {
+    margin-right: 8px;
+}
+
+/* Dashboard */
+
+.scmp-dashboard h1 {
+    margin-bottom: 24px;
+}
+
+.scmp-status-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 28px;
+    border-left: 5px solid #c3c4c7;
+}
+
+.scmp-status-card.valid {
+    border-left-color: #43a047;
+}
+
+.scmp-status-card.invalid {
+    border-left-color: #e53935;
+}
+
+.scmp-status-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+
+.scmp-status-label {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 12px;
+}
+
+.scmp-status-card.valid .scmp-status-label {
+    color: #2e7d32;
+}
+
+.scmp-status-card.invalid .scmp-status-label {
+    color: #c62828;
+}
+
+.scmp-status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.scmp-status-dot.installed {
+    background: #43a047;
+}
+
+.scmp-status-dot.missing {
+    background: #e53935;
+}
+
+.scmp-status-dot.loading {
+    background: #ffb300;
+}
+

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: supercraft_master_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress_password
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:latest
+    container_name: supercraft_master_wordpress
+    restart: always
+    ports:
+      - "8891:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress_password
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+      # Mount the current plugin directory directly
+      - .:/var/www/html/wp-content/plugins/supercraft-master-plugin
+      # Mount a local uploads directory so uploaded media persists
+      - ./wp-uploads:/var/www/html/wp-content/uploads
+
+volumes:
+  db_data:
+  wordpress_data:

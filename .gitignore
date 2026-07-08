@@ -1,0 +1,5 @@
+# WordPress / local development ignores
+wp-uploads/
+.DS_Store
+*.zip
+*.log
