@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.2
+ * Version:     1.0.3
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.2');
+define('SCMP_VERSION', '1.0.3');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -361,8 +361,19 @@ function scmp_is_plugin_installed($slug) {
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
     }
     $all_plugins = get_plugins();
+    
+    $normalize = function($str) {
+        return str_replace([' ', '_'], '-', strtolower($str));
+    };
+
+    $norm_folder = $normalize($folder_name);
+    $norm_slug = $normalize($slug);
+
     foreach (array_keys($all_plugins) as $plugin_file) {
-        if (dirname($plugin_file) === $folder_name || dirname($plugin_file) === $slug || $plugin_file === $slug) {
+        $dir = dirname($plugin_file);
+        $norm_dir = $normalize($dir);
+        
+        if ($norm_dir === $norm_folder || $norm_dir === $norm_slug || $normalize($plugin_file) === $norm_slug) {
             return $plugin_file;
         }
     }
