@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.4
+ * Version:     1.0.5
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.4');
+define('SCMP_VERSION', '1.0.5');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -356,6 +356,7 @@ function scmp_register_admin_pages() {
 function scmp_is_plugin_installed($slug) {
     $premium = scmp_get_premium_plugins();
     $folder_name = isset($premium[$slug]['target_folder']) ? $premium[$slug]['target_folder'] : $slug;
+    $configured_name = isset($premium[$slug]['name']) ? $premium[$slug]['name'] : '';
 
     if (!function_exists('get_plugins')) {
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -368,12 +369,45 @@ function scmp_is_plugin_installed($slug) {
 
     $norm_folder = $normalize($folder_name);
     $norm_slug = $normalize($slug);
+    $norm_configured_name = $normalize($configured_name);
 
-    foreach (array_keys($all_plugins) as $plugin_file) {
+    foreach ($all_plugins as $plugin_file => $plugin_data) {
         $dir = dirname($plugin_file);
+        $file_base = basename($plugin_file);
         $norm_dir = $normalize($dir);
         
-        if ($norm_dir === $norm_folder || $norm_dir === $norm_slug || $normalize($plugin_file) === $norm_slug) {
+        // 1. Directory name check
+        if ($norm_dir === $norm_folder || $norm_dir === $norm_slug) {
+            return $plugin_file;
+        }
+
+        // 2. TextDomain check
+        if (isset($plugin_data['TextDomain'])) {
+            $norm_td = $normalize($plugin_data['TextDomain']);
+            if ($norm_td === $norm_slug || $norm_td === $norm_folder) {
+                return $plugin_file;
+            }
+        }
+
+        // 3. Plugin Name check (matches actual "Superanimate GSAP Elementor" or configured name)
+        if (isset($plugin_data['Name'])) {
+            $norm_name = $normalize($plugin_data['Name']);
+            if ($norm_name === $norm_slug || $norm_name === $norm_folder || ($norm_configured_name && $norm_name === $norm_configured_name)) {
+                return $plugin_file;
+            }
+            if ($slug === 'supercraft-animation-plugin' && $norm_name === $normalize('Superanimate GSAP Elementor')) {
+                return $plugin_file;
+            }
+        }
+
+        // 4. Fallback File Name match
+        if ($slug === 'supercraft-animation-plugin' && $file_base === 'supercraft-animations.php') {
+            return $plugin_file;
+        }
+        if ($slug === 'supercomponent-studio' && $file_base === 'supercomponent-studio.php') {
+            return $plugin_file;
+        }
+        if ($slug === 'proelements' && $file_base === 'pro-elements.php') {
             return $plugin_file;
         }
     }
