@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.3
+ * Version:     1.0.4
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.3');
+define('SCMP_VERSION', '1.0.4');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -475,6 +475,19 @@ function scmp_render_dashboard() {
     if ($status === 'valid') {
         update_option('supercraft_master_onboarding_complete', 'yes');
     }
+    
+    // Debugging installed check
+    $debug_log = [];
+    $all_plugins_def = array_merge(scmp_get_premium_plugins(), scmp_get_wpdotorg_plugins());
+    foreach ($all_plugins_def as $s => $info) {
+        $file = scmp_is_plugin_installed($s);
+        $debug_log[] = sprintf('%s -> file: %s (installed: %s, active: %s)', $s, $file ? $file : '(false)', $file ? 'yes' : 'no', $file ? (is_plugin_active($file) ? 'yes' : 'no') : 'no');
+    }
+    if (function_exists('get_plugins')) {
+        $debug_log[] = 'All plugins: ' . implode(', ', array_keys(get_plugins()));
+    }
+    file_put_contents(WP_CONTENT_DIR . '/uploads/scmp_debug.log', implode("\n", $debug_log));
+
     $installed = get_option('scmp_installed_plugins', []);
     ?>
     <div class="wrap scmp-dashboard">
