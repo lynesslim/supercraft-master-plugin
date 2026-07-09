@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.8
+ * Version:     1.0.9
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.8');
+define('SCMP_VERSION', '1.0.9');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -30,16 +30,14 @@ if (file_exists(SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.p
 
 add_action('elementor/editor/after_enqueue_scripts', 'scmp_enqueue_editor_assets');
 function scmp_enqueue_editor_assets() {
-    if (!scmp_is_validated()) {
-        return;
-    }
     wp_enqueue_style('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.css', [], SCMP_VERSION);
     wp_enqueue_script('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.js', ['jquery'], SCMP_VERSION, true);
 
     wp_localize_script('scmp-editor-connector', 'scmp', [
-        'ajax_url'    => admin_url('admin-ajax.php'),
-        'nonce'       => wp_create_nonce('scmp_nonce'),
-        'license_key' => get_option('supercraft_master_license_key', ''),
+        'ajax_url'      => admin_url('admin-ajax.php'),
+        'nonce'         => wp_create_nonce('scmp_nonce'),
+        'license_key'   => get_option('supercraft_master_license_key', ''),
+        'is_validated'  => scmp_is_validated(),
     ]);
 }
 

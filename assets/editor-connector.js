@@ -125,6 +125,9 @@
     }
 
     function injectButton() {
+        if (!scmp.is_validated) {
+            return;
+        }
         if ($('#scmp-vault-fab').length) {
             return;
         }
