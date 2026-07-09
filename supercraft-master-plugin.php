@@ -152,6 +152,13 @@ function scmp_ajax_supervault_proxy() {
         wp_send_json_error(['message' => 'Invalid response from SuperVault.']);
     }
 
+    // Check if the remote API returned an error (non-2xx status)
+    $http_code = wp_remote_retrieve_response_code($response);
+    if ($http_code < 200 || $http_code >= 300) {
+        $error_msg = isset($data['message']) ? $data['message'] : 'SuperVault API error (HTTP ' . $http_code . ')';
+        wp_send_json_error(['message' => $error_msg]);
+    }
+
     if ($action_type === 'categories') {
         set_transient('scmp_sv_categories', $data, 12 * HOUR_IN_SECONDS);
     }
