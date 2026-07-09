@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.1.0');
+define('SCMP_VERSION', '1.1.1');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -39,6 +39,22 @@ function scmp_enqueue_editor_assets() {
         'license_key'   => get_option('supercraft_master_license_key', ''),
         'is_validated'  => scmp_is_validated(),
     ]);
+}
+
+// ── Preview Frame Animations Bypass ────────────────────────────────────
+
+add_action('wp_head', 'scmp_inject_preview_styles');
+function scmp_inject_preview_styles() {
+    if (isset($_GET['supervault_preview']) && $_GET['supervault_preview'] === '1') {
+        echo '<style>
+            /* Force hidden entrance-animation elements to show immediately in preview */
+            .elementor-invisible {
+                visibility: visible !important;
+                opacity: 1 !important;
+                animation: none !important;
+            }
+        </style>';
+    }
 }
 
 // ── SuperVault Proxy ──────────────────────────────────────────────────
