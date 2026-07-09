@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.0.9
+ * Version:     1.1.0
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.0.9');
+define('SCMP_VERSION', '1.1.0');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -75,12 +75,14 @@ function scmp_ajax_supervault_proxy() {
             }
             $bypass_cache = (defined('WP_DEBUG') && WP_DEBUG);
             $cached_categories = $bypass_cache ? false : get_transient($cache_key);
-            if (false !== $cached_categories) {
+            if (false !== $cached_categories && is_array($cached_categories) && !isset($cached_categories['code']) && !isset($cached_categories['message'])) {
                 wp_send_json_success($cached_categories);
+            } else if (false !== $cached_categories) {
+                delete_transient($cache_key);
             }
             $url = $base_url . '/categories';
             break;
-
+ 
         case 'tags':
             $cache_key = 'scmp_sv_tags';
             if (isset($_POST['force_refresh']) && $_POST['force_refresh'] === 'true') {
@@ -88,12 +90,14 @@ function scmp_ajax_supervault_proxy() {
             }
             $bypass_cache = (defined('WP_DEBUG') && WP_DEBUG);
             $cached_tags = $bypass_cache ? false : get_transient($cache_key);
-            if (false !== $cached_tags) {
+            if (false !== $cached_tags && is_array($cached_tags) && !isset($cached_tags['code']) && !isset($cached_tags['message'])) {
                 wp_send_json_success($cached_tags);
+            } else if (false !== $cached_tags) {
+                delete_transient($cache_key);
             }
             $url = $base_url . '/tags';
             break;
-
+ 
         case 'requirements':
             $cache_key = 'scmp_sv_requirements';
             if (isset($_POST['force_refresh']) && $_POST['force_refresh'] === 'true') {
@@ -101,8 +105,10 @@ function scmp_ajax_supervault_proxy() {
             }
             $bypass_cache = (defined('WP_DEBUG') && WP_DEBUG);
             $cached_reqs = $bypass_cache ? false : get_transient($cache_key);
-            if (false !== $cached_reqs) {
+            if (false !== $cached_reqs && is_array($cached_reqs) && !isset($cached_reqs['code']) && !isset($cached_reqs['message'])) {
                 wp_send_json_success($cached_reqs);
+            } else if (false !== $cached_reqs) {
+                delete_transient($cache_key);
             }
             $url = $base_url . '/requirements';
             break;
