@@ -331,6 +331,7 @@ function scmp_get_wpdotorg_plugins() {
         'cimo-image-optimizer'            => 'CIMO Image Optimizer',
         'instant-images'                  => 'Instant Images',
         'marquee-addons-for-elementor'    => 'Marquee Addons for Elementor',
+        'post-duplicator'                 => 'Post Duplicator',
     ];
 }
 
