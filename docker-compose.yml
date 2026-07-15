@@ -28,6 +28,8 @@ services:
       - wordpress_data:/var/www/html
       # Mount the current plugin directory directly
       - .:/var/www/html/wp-content/plugins/supercraft-master-plugin
+      # Mount the animation plugin directory
+      - ../Supercraft Animation Plugin:/var/www/html/wp-content/plugins/supercraft-animation-plugin
       # Mount a local uploads directory so uploaded media persists
       - ./wp-uploads:/var/www/html/wp-content/uploads
 
