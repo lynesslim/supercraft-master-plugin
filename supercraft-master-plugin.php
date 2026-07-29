@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.1.1
+ * Version:     1.1.2
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.1.1');
+define('SCMP_VERSION', '1.1.2');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -279,12 +279,10 @@ function scmp_ajax_push_to_supervault() {
 // ── Global Validation Filter ──────────────────────────────────────────
 
 add_filter('supercraft_is_plugin_validated', function ($is_valid, $plugin_slug) {
-    // 1. Check local environment override
     if (defined('SUPERCRAFT_ALLOW_UNVALIDATED') && SUPERCRAFT_ALLOW_UNVALIDATED) {
         return true;
     }
 
-    // 2. Fallback to Master Plugin status database option
     $master_status = get_option('supercraft_master_validation_status', 'not_set');
     if ($master_status === 'valid') {
         return true;
@@ -309,6 +307,12 @@ function scmp_get_premium_plugins() {
             'zip_url'       => 'https://github.com/lynesslim/supercraft-animation-plugin',
             'target_folder' => 'supercraft-animation-plugin',
         ],
+        'supercraft-seo' => [
+            'name'          => 'Supercraft Technical SEO Engine',
+            'source'        => 'github',
+            'zip_url'       => 'https://github.com/lynesslim/supercraft-seo',
+            'target_folder' => 'supercraft-seo',
+        ],
         'supercomponent-studio' => [
             'name'          => 'SuperComponent Studio',
             'source'        => 'github',
@@ -326,12 +330,13 @@ function scmp_get_premium_plugins() {
 
 function scmp_get_wpdotorg_plugins() {
     return [
-        'elementor'                       => 'Elementor',
+        'elementor'                          => 'Elementor',
+        'all-in-one-seo-pack'                => 'All in One SEO',
         'skyboot-custom-icons-for-elementor' => 'Skyboot Custom Icons',
-        'cimo-image-optimizer'            => 'CIMO Image Optimizer',
-        'instant-images'                  => 'Instant Images',
-        'marquee-addons-for-elementor'    => 'Marquee Addons for Elementor',
-        'post-duplicator'                 => 'Post Duplicator',
+        'cimo-image-optimizer'               => 'CIMO Image Optimizer',
+        'instant-images'                     => 'Instant Images',
+        'marquee-addons-for-elementor'       => 'Marquee Addons for Elementor',
+        'post-duplicator'                    => 'Post Duplicator',
     ];
 }
 
@@ -435,7 +440,7 @@ function scmp_is_plugin_installed($slug) {
             }
         }
 
-        // 3. Plugin Name check (matches actual "Superanimate GSAP Elementor" or configured name)
+        // 3. Plugin Name check
         if (isset($plugin_data['Name'])) {
             $norm_name = $normalize($plugin_data['Name']);
             if ($norm_name === $norm_slug || $norm_name === $norm_folder || ($norm_configured_name && $norm_name === $norm_configured_name)) {
@@ -448,6 +453,9 @@ function scmp_is_plugin_installed($slug) {
 
         // 4. Fallback File Name match
         if ($slug === 'supercraft-animation-plugin' && $file_base === 'supercraft-animations.php') {
+            return $plugin_file;
+        }
+        if ($slug === 'supercraft-seo' && $file_base === 'supercraft-seo.php') {
             return $plugin_file;
         }
         if ($slug === 'supercomponent-studio' && $file_base === 'supercomponent-studio.php') {
