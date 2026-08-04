@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.1.2
+ * Version:     1.1.4
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.1.2');
+define('SCMP_VERSION', '1.1.4');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -30,8 +30,9 @@ if (file_exists(SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.p
 
 add_action('elementor/editor/after_enqueue_scripts', 'scmp_enqueue_editor_assets');
 function scmp_enqueue_editor_assets() {
-    wp_enqueue_style('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.css', [], SCMP_VERSION);
-    wp_enqueue_script('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.js', ['jquery'], SCMP_VERSION, true);
+    $ver = SCMP_VERSION . '.' . filemtime(SCMP_PLUGIN_DIR . 'assets/editor-connector.js');
+    wp_enqueue_style('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.css', [], $ver);
+    wp_enqueue_script('scmp-editor-connector', SCMP_PLUGIN_URL . 'assets/editor-connector.js', ['jquery'], $ver, true);
 
     wp_localize_script('scmp-editor-connector', 'scmp', [
         'ajax_url'      => admin_url('admin-ajax.php'),

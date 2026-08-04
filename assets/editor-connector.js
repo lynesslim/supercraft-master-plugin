@@ -114,7 +114,8 @@
         pageSize: 12,
         loadingMore: false,
         pendingElementJson: '',
-        pendingView: null
+        pendingView: null,
+        targetView: null
     };
 
     function init() {
@@ -181,6 +182,15 @@
             var previewUrl = $(this).data('preview-url');
             if (previewUrl) {
                 openPreview(previewUrl);
+            }
+        });
+
+        $(document).on('click', '.scmp-card-insert', function () {
+            var $btn = $(this);
+            var $card = $btn.closest('.scmp-component-card');
+            var id = $card.data('id');
+            if (id) {
+                insertComponent(id, $card);
             }
         });
 
@@ -267,7 +277,10 @@
         });
     }
 
-    function openModal() {
+    function openModal(isContextMenu) {
+        if (!isContextMenu) {
+            state.targetView = null;
+        }
         $('#scmp-supervault-modal').fadeIn(200);
         $('body').css('overflow', 'hidden');
         loadCategories();
@@ -300,6 +313,19 @@
     function closeModal() {
         $('#scmp-supervault-modal').fadeOut(200);
         $('body').css('overflow', '');
+        state.targetView = null;
+    }
+
+    function openModalWithTargetView(view) {
+        var containerView = view;
+        if (view && view.model) {
+            var elType = view.model.get('elType');
+            if (elType === 'widget' && view._parent) {
+                containerView = view._parent;
+            }
+        }
+        state.targetView = containerView;
+        openModal(true);
     }
 
     function openPreview(url) {
@@ -473,6 +499,7 @@
             if (previewUrl) {
                 html += '<button type="button" class="scmp-card-btn scmp-card-preview" data-action="preview" data-preview-url="' + previewUrl + '">Preview</button>';
             }
+            html += '<button type="button" class="scmp-card-btn scmp-card-insert" data-action="insert" data-id="' + id + '">Insert</button>';
             html += '<button type="button" class="scmp-card-btn scmp-card-copy" data-action="copy" data-id="' + id + '">Copy</button>';
             html += '</div>';
             html += '</div>';
@@ -488,6 +515,187 @@
             html += '</div>';
         });
         $grid.html(html);
+    }
+
+    function prepareElementForInsert(el, isNested) {
+        var clone = $.extend(true, {}, el);
+        clone.id = Math.random().toString(36).substr(2, 7);
+        if (isNested && clone.elType === 'container') {
+            clone.isInner = true;
+        }
+        if (clone.elements && Array.isArray(clone.elements)) {
+            clone.elements = clone.elements.map(function (child) {
+                return prepareElementForInsert(child, true);
+            });
+        }
+        return clone;
+    }
+
+    function prepareElementsForTarget(rawElements, isNested) {
+        if (!Array.isArray(rawElements)) {
+            rawElements = [rawElements];
+        }
+
+        return rawElements.map(function (el) {
+            return prepareElementForInsert(el, isNested);
+        });
+    }
+
+    function captureSelectedTargetView() {
+        if (typeof elementor === 'undefined') return null;
+        try {
+            if (elementor.selection && typeof elementor.selection.getElements === 'function') {
+                var selected = elementor.selection.getElements();
+                if (selected && selected.length > 0) {
+                    var view = selected[0];
+                    if (view) {
+                        var elType = view.model ? view.model.get('elType') : null;
+                        if (elType === 'widget' && view._parent) {
+                            return view._parent;
+                        }
+                        return view;
+                    }
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    function getTargetElementView() {
+        if (typeof elementor === 'undefined') return null;
+
+        if (state.targetView) {
+            return state.targetView;
+        }
+
+        var captured = captureSelectedTargetView();
+        if (captured) return captured;
+
+        try {
+            if (typeof elementor.getPreviewView === 'function') {
+                var previewView = elementor.getPreviewView();
+                if (previewView) return previewView;
+            }
+        } catch (e) {}
+
+        return null;
+    }
+
+    function insertSingleElement(el, targetView) {
+        var view = targetView || (typeof elementor !== 'undefined' && typeof elementor.getPreviewView === 'function' ? elementor.getPreviewView() : null);
+        
+        function tryMount(model, v) {
+            if (!v) return false;
+
+            // Method 1: Elementor Command API ($e.run 'document/elements/create') with container instance
+            // This triggers Elementor UI rendering and preview iframe updates automatically
+            if (typeof $e !== 'undefined' && $e.run) {
+                try {
+                    var containerInstance = null;
+                    if (typeof v.getContainer === 'function') {
+                        containerInstance = v.getContainer();
+                    } else if (typeof elementor !== 'undefined' && elementor.documents && elementor.documents.getCurrent) {
+                        containerInstance = elementor.documents.getCurrent().container;
+                    }
+                    var opts = { model: model };
+                    if (containerInstance) {
+                        opts.container = containerInstance;
+                    }
+                    var res = $e.run('document/elements/create', opts);
+                    if (res) return true;
+                } catch (e) {
+                    console.warn('SuperVault: $e.run failed, trying View.addChildModel', e);
+                }
+            }
+
+            // Method 2: View.addChildModel() (Native Elementor View method)
+            if (typeof v.addChildModel === 'function') {
+                try {
+                    var resView = v.addChildModel(model);
+                    if (resView) return true;
+                } catch (e) {
+                    console.warn('SuperVault: View.addChildModel failed', e);
+                }
+            }
+
+            return false;
+        }
+
+        var inserted = tryMount(el, view);
+
+        // Fallback: If container mount failed (e.g. Elementor rejected container-in-container nesting for this element),
+        // and el is a container holding child elements, try mounting its inner elements directly into the view!
+        if (!inserted && (el.elType === 'container' || el.elType === 'section') && el.elements && Array.isArray(el.elements) && el.elements.length > 0) {
+            var childrenInserted = false;
+            el.elements.forEach(function (child) {
+                if (tryMount(child, view)) {
+                    childrenInserted = true;
+                }
+            });
+            inserted = childrenInserted;
+        }
+
+        if (!inserted) {
+            throw new Error('Could not find suitable Elementor insertion target.');
+        }
+    }
+
+    function insertComponent(id, $card) {
+        if ($card.hasClass('scmp-inserting') || $card.hasClass('scmp-copying')) {
+            return;
+        }
+        $card.addClass('scmp-inserting');
+        var $btn = $card.find('.scmp-card-insert');
+        var origText = $btn.text();
+        $btn.text('Inserting...');
+
+        proxyRequest('json', { id: id }, function (data) {
+            try {
+                var rawElements = data.elements || (Array.isArray(data) ? data : [data]);
+
+                var isNested = !!state.targetView;
+                var targetView = state.targetView || (typeof elementor !== 'undefined' && typeof elementor.getPreviewView === 'function' ? elementor.getPreviewView() : null);
+
+                var preparedElements = prepareElementsForTarget(rawElements, isNested);
+
+                preparedElements.forEach(function (el) {
+                    insertSingleElement(el, targetView);
+                });
+
+                if (typeof elementor !== 'undefined' && elementor.saver && elementor.saver.setFlagEditorChange) {
+                    elementor.saver.setFlagEditorChange(true);
+                }
+
+                showInsertSuccess($card, $btn, origText);
+                setTimeout(closeModal, 600);
+            } catch (err) {
+                console.warn('SuperVault insertion fallback to copy:', err);
+                $card.removeClass('scmp-inserting');
+                $btn.text(origText);
+                copyComponent(id, $card);
+            }
+        }, function (errorMsg) {
+            $card.removeClass('scmp-inserting');
+            $btn.text(origText);
+            alert('Failed to fetch component from SuperVault: ' + errorMsg);
+        });
+    }
+
+    function showInsertSuccess($card, $btn, origText) {
+        $card.removeClass('scmp-inserting').addClass('scmp-inserted');
+        $btn.text('Inserted!');
+        var $success = $('#scmp-copy-success');
+        var offset = $card.offset();
+        $success.html('<span class="scmp-copy-check">&#10003;</span> Inserted into page!').css({
+            top: (offset.top - 10) + 'px',
+            left: (offset.left + $card.outerWidth() / 2 - $success.outerWidth() / 2) + 'px'
+        }).fadeIn(200);
+
+        setTimeout(function () {
+            $success.fadeOut(300);
+            $card.removeClass('scmp-inserted');
+            $btn.text(origText);
+        }, 2000);
     }
 
     function copyComponent(id, $card) {
@@ -544,20 +752,72 @@
             return;
         }
 
-        ['section', 'container', 'column', 'widget'].forEach(function (elementType) {
+        var elementTypes = ['section', 'container', 'column', 'widget', 'empty', 'add-section', 'document', 'main', 'container_empty', 'section_empty', 'editor'];
+
+        elementTypes.forEach(function (elementType) {
             elementor.hooks.addFilter('elements/' + elementType + '/contextMenuGroups', function (groups, view) {
-                groups.push({
-                    name: 'supervault',
-                    actions: [{
-                        name: 'push-to-supervault',
-                        title: 'Push to SuperVault',
-                        icon: 'eicon-arrow-up',
-                        callback: function () {
-                            openPublishForm(view);
-                        }
-                    }]
-                });
+                groups = groups || [];
+                var exists = groups.some(function (g) { return g.name === 'supervault'; });
+                if (!exists) {
+                    groups.push({
+                        name: 'supervault',
+                        actions: [
+                            {
+                                name: 'push-to-supervault',
+                                title: 'Push to SuperVault',
+                                icon: 'eicon-arrow-up',
+                                callback: function () {
+                                    openPublishForm(view);
+                                }
+                            },
+                            {
+                                name: 'insert-from-supervault',
+                                title: 'Insert from SuperVault',
+                                icon: 'eicon-arrow-down',
+                                callback: function () {
+                                    openModalWithTargetView(view);
+                                }
+                            }
+                        ]
+                    });
+                }
                 return groups;
+            });
+        });
+
+        // Universal behavior filters for Flexbox Containers and all element views
+        ['elements/base/behaviors', 'elements/container/behaviors', 'views/add-section/behaviors'].forEach(function (filterHook) {
+            elementor.hooks.addFilter(filterHook, function (behaviors, view) {
+                if (behaviors && behaviors.contextMenu) {
+                    if (!behaviors.contextMenu.groups) {
+                        behaviors.contextMenu.groups = [];
+                    }
+                    var exists = behaviors.contextMenu.groups.some(function (g) { return g.name === 'supervault'; });
+                    if (!exists) {
+                        behaviors.contextMenu.groups.push({
+                            name: 'supervault',
+                            actions: [
+                                {
+                                    name: 'push-to-supervault',
+                                    title: 'Push to SuperVault',
+                                    icon: 'eicon-arrow-up',
+                                    callback: function () {
+                                        openPublishForm(view);
+                                    }
+                                },
+                                {
+                                    name: 'insert-from-supervault',
+                                    title: 'Insert from SuperVault',
+                                    icon: 'eicon-arrow-down',
+                                    callback: function () {
+                                        openModalWithTargetView(view);
+                                    }
+                                }
+                            ]
+                        });
+                    }
+                }
+                return behaviors;
             });
         });
     }
