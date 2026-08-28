@@ -478,19 +478,30 @@
                 });
                 requirementsHtml += '</div>';
             }
- 
-            var thumbnail = comp.thumbnail || comp.image || '';
+
+            var previewVideo = comp['preview-video'] || comp.preview_video || comp.previewVideo || comp.video || '';
+            if (typeof previewVideo === 'object' && previewVideo !== null) {
+                previewVideo = previewVideo.url || '';
+            }
+
+            var thumbnail = comp['preview-image'] || comp.preview_image || comp.thumbnail || comp.image || '';
+            if (typeof thumbnail === 'object' && thumbnail !== null) {
+                thumbnail = thumbnail.url || '';
+            }
+
             var previewUrl = comp.preview_url || comp.url || '';
             var id = comp.id || '';
             var tags = comp.tags || [];
             var firstTag = tags.length ? tags[0] : '';
- 
+
             html += '<div class="scmp-component-card" data-id="' + id + '" data-preview-url="' + previewUrl + '">';
             html += '<div class="scmp-card-image-wrap">';
             if (firstTag) {
                 html += '<span class="scmp-card-badge">' + firstTag + '</span>';
             }
-            if (thumbnail) {
+            if (previewVideo) {
+                html += '<video class="scmp-card-thumb scmp-card-thumb-video" src="' + previewVideo + '" autoplay loop muted playsinline></video>';
+            } else if (thumbnail) {
                 html += '<div class="scmp-card-thumb" style="background-image:url(' + thumbnail + ');"></div>';
             } else {
                 html += '<div class="scmp-card-thumb scmp-card-thumb-placeholder"><span class="eicon-device-desktop"></span></div>';
