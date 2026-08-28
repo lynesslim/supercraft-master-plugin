@@ -19,6 +19,21 @@
                                 '<input type="text" id="scmp-publish-title" class="scmp-publish-input" placeholder="Element title" required />' +
                             '</div>' +
                             '<div class="scmp-publish-field">' +
+                                '<label>Preview Media</label>' +
+                                '<div class="scmp-publish-media-toggle">' +
+                                    '<button type="button" class="scmp-media-type-btn active" data-type="video">Video</button>' +
+                                    '<button type="button" class="scmp-media-type-btn" data-type="image">Image</button>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="scmp-publish-field scmp-publish-media-video-wrap">' +
+                                '<label for="scmp-publish-video">Preview Video</label>' +
+                                '<div class="scmp-publish-image-row">' +
+                                    '<input type="text" id="scmp-publish-video" class="scmp-publish-input" placeholder="Select or enter video URL (.mp4, .webm)" />' +
+                                    '<button type="button" id="scmp-publish-video-btn" class="scmp-publish-image-btn">Select</button>' +
+                                '</div>' +
+                                '<div id="scmp-publish-video-preview" class="scmp-publish-image-preview scmp-publish-video-preview" style="display:none;"></div>' +
+                            '</div>' +
+                            '<div class="scmp-publish-field scmp-publish-media-image-wrap" style="display:none;">' +
                                 '<label for="scmp-publish-image">Preview Image</label>' +
                                 '<div class="scmp-publish-image-row">' +
                                     '<input type="text" id="scmp-publish-image" class="scmp-publish-input" placeholder="Select or enter image URL" />' +
@@ -246,6 +261,53 @@
             }
         });
 
+        $(document).on('click', '.scmp-media-type-btn', function () {
+            var type = $(this).data('type');
+            $('.scmp-media-type-btn').removeClass('active');
+            $(this).addClass('active');
+
+            if (type === 'video') {
+                $('.scmp-publish-media-video-wrap').show();
+                $('.scmp-publish-media-image-wrap').hide();
+            } else {
+                $('.scmp-publish-media-image-wrap').show();
+                $('.scmp-publish-media-video-wrap').hide();
+            }
+        });
+
+        $(document).on('click', '#scmp-publish-video-btn', function (e) {
+            e.preventDefault();
+            if (typeof wp === 'undefined' || !wp.media) {
+                alert('WordPress Media Library is not available.');
+                return;
+            }
+            var frame = wp.media({
+                title: 'Select Preview Video',
+                library: {
+                    type: 'video'
+                },
+                button: {
+                    text: 'Use this video'
+                },
+                multiple: false
+            });
+            frame.on('select', function () {
+                var attachment = frame.state().get('selection').first().toJSON();
+                $('#scmp-publish-video').val(attachment.url);
+                $('#scmp-publish-video-preview').html('<video src="' + attachment.url + '" autoplay loop muted playsinline></video>').show();
+            });
+            frame.open();
+        });
+
+        $(document).on('input change', '#scmp-publish-video', function () {
+            var url = $(this).val().trim();
+            if (url) {
+                $('#scmp-publish-video-preview').html('<video src="' + url + '" autoplay loop muted playsinline></video>').show();
+            } else {
+                $('#scmp-publish-video-preview').hide().empty();
+            }
+        });
+
         $(document).on('click', '#scmp-publish-image-btn', function (e) {
             e.preventDefault();
             if (typeof wp === 'undefined' || !wp.media) {
@@ -254,6 +316,9 @@
             }
             var frame = wp.media({
                 title: 'Select Preview Image',
+                library: {
+                    type: 'image'
+                },
                 button: {
                     text: 'Use this image'
                 },
@@ -904,6 +969,15 @@
         $('#scmp-publish-submit').prop('disabled', false).removeClass('loading');
         $('#scmp-publish-form')[0].reset();
         $('#scmp-publish-title').val(title);
+
+        // Reset to Video by default
+        $('.scmp-media-type-btn[data-type="video"]').addClass('active');
+        $('.scmp-media-type-btn[data-type="image"]').removeClass('active');
+        $('.scmp-publish-media-video-wrap').show();
+        $('.scmp-publish-media-image-wrap').hide();
+        $('#scmp-publish-video').val('');
+        $('#scmp-publish-video-preview').hide().empty();
+        $('#scmp-publish-image').val('');
         $('#scmp-publish-image-preview').hide().empty();
 
         $('#scmp-publish-modal').fadeIn(200);
@@ -1017,12 +1091,15 @@
             });
         }
 
-        var previewImage = $('#scmp-publish-image').val().trim();
+        var activeMediaType = $('.scmp-media-type-btn.active').data('type') || 'video';
+        var previewVideo = activeMediaType === 'video' ? $('#scmp-publish-video').val().trim() : '';
+        var previewImage = activeMediaType === 'image' ? $('#scmp-publish-image').val().trim() : '';
 
         var payload = {
             action: 'scmp_push_to_supervault',
             nonce: scmp.nonce,
             title: title,
+            preview_video: previewVideo,
             preview_image: previewImage,
             categories: categories,
             tags: tags,

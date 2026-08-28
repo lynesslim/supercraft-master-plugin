@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.1.6
+ * Version:     1.1.8
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.1.6');
+define('SCMP_VERSION', '1.1.8');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -210,6 +210,7 @@ function scmp_ajax_push_to_supervault() {
     }
 
     $title         = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+    $preview_video = isset($_POST['preview_video']) ? esc_url_raw(wp_unslash($_POST['preview_video'])) : '';
     $preview_image = isset($_POST['preview_image']) ? esc_url_raw(wp_unslash($_POST['preview_image'])) : '';
     $categories    = isset($_POST['categories']) ? array_map('sanitize_text_field', wp_unslash($_POST['categories'])) : [];
     $tags          = isset($_POST['tags']) ? array_map('sanitize_text_field', wp_unslash($_POST['tags'])) : [];
@@ -243,6 +244,8 @@ function scmp_ajax_push_to_supervault() {
 
     $payload = [
         'title'         => $title,
+        'preview_video' => $preview_video,
+        'preview-video' => $preview_video,
         'preview_image' => $preview_image,
         'thumbnail'     => $preview_image,
         'categories'    => $categories,

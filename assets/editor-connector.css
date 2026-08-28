@@ -235,12 +235,23 @@
     color: #121315;
 }
 
-/* ── Component Grid ──────────────────────────────────────────────── */
+/* ── Component Grid (3-Column Masonry) ───────────────────────────── */
 
 .scmp-component-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    column-count: 3;
+    column-gap: 16px;
+}
+
+@media (max-width: 1200px) {
+    .scmp-component-grid {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .scmp-component-grid {
+        column-count: 1;
+    }
 }
 
 .scmp-component-grid.loading {
@@ -249,7 +260,7 @@
 }
 
 .scmp-empty-state {
-    grid-column: 1 / -1;
+    column-span: all;
     text-align: center;
     padding: 60px 20px;
     color: #7a7e85;
@@ -259,15 +270,22 @@
 /* ── Component Card ──────────────────────────────────────────────── */
 
 .scmp-component-card {
+    break-inside: avoid;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 16px;
     background: #1a1b1e;
     border-radius: 8px;
     overflow: hidden;
-    transition: border-color 0.2s;
-    border: 1px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    border: 1px solid #2a2b2e;
+    vertical-align: top;
+    box-sizing: border-box;
 }
 
 .scmp-component-card:hover {
     border-color: #3a3c42;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .scmp-component-card.scmp-copying {
@@ -281,6 +299,7 @@
 .scmp-card-image-wrap {
     position: relative;
     overflow: hidden;
+    background: #121315;
 }
 
 .scmp-card-badge {
@@ -300,19 +319,22 @@
 }
 
 .scmp-card-thumb {
-    height: 180px;
+    width: 100%;
+    min-height: 160px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    background-color: #fff;
+    background-color: #121315;
+    display: block;
 }
 
 video.scmp-card-thumb,
 .scmp-card-thumb-video {
     width: 100%;
-    height: 180px;
+    height: auto;
+    max-height: 400px;
     object-fit: contain;
-    background-color: #fff;
+    background-color: #121315;
     display: block;
     pointer-events: none;
 }
@@ -321,8 +343,10 @@ video.scmp-card-thumb,
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 160px;
     font-size: 36px;
     color: #4c4f56;
+    background-color: #121315;
 }
 
 .scmp-card-overlay {
@@ -552,6 +576,7 @@ video.scmp-card-thumb,
 .scmp-infinite-loader {
     width: 100%;
     grid-column: 1 / -1;
+    column-span: all;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -623,6 +648,41 @@ video.scmp-card-thumb,
     border-color: #d5e754;
 }
 
+.scmp-publish-media-toggle {
+    display: flex;
+    background: #1a1b1e;
+    border: 1px solid #3a3c42;
+    border-radius: 6px;
+    padding: 3px;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.scmp-media-type-btn {
+    flex: 1;
+    padding: 7px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #9ea2aa;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    font-family: inherit;
+}
+
+.scmp-media-type-btn.active {
+    background: #d5e754;
+    color: #121315;
+}
+
+.scmp-media-type-btn:hover:not(.active) {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
 .scmp-publish-image-row {
     display: flex;
     gap: 8px;
@@ -660,7 +720,8 @@ video.scmp-card-thumb,
     background: #1a1b1e;
 }
 
-.scmp-publish-image-preview img {
+.scmp-publish-image-preview img,
+.scmp-publish-video-preview video {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
