@@ -479,15 +479,43 @@
                 requirementsHtml += '</div>';
             }
 
-            var previewVideo = comp['preview-video'] || comp.preview_video || comp.previewVideo || comp.video || '';
-            if (typeof previewVideo === 'object' && previewVideo !== null) {
-                previewVideo = previewVideo.url || '';
+            function extractMediaUrl(val) {
+                if (!val) return '';
+                if (typeof val === 'string') return val.trim();
+                if (Array.isArray(val) && val.length > 0) return extractMediaUrl(val[0]);
+                if (typeof val === 'object') {
+                    if (val.url && typeof val.url === 'string') return val.url.trim();
+                    if (val.src && typeof val.src === 'string') return val.src.trim();
+                    if (val.guid && typeof val.guid === 'string') return val.guid.trim();
+                    if (val.sizes && val.sizes.full && val.sizes.full.url) return val.sizes.full.url;
+                }
+                return '';
             }
 
-            var thumbnail = comp['preview-image'] || comp.preview_image || comp.thumbnail || comp.image || '';
-            if (typeof thumbnail === 'object' && thumbnail !== null) {
-                thumbnail = thumbnail.url || '';
-            }
+            var rawVideo = comp['preview-video'] ||
+                           comp.preview_video ||
+                           comp.previewVideo ||
+                           comp.video ||
+                           comp.video_url ||
+                           comp.preview_video_url ||
+                           (comp.acf && (comp.acf['preview-video'] || comp.acf.preview_video || comp.acf.previewVideo || comp.acf.video || comp.acf.video_url || comp.acf.preview_video_url)) ||
+                           (comp.meta && (comp.meta['preview-video'] || comp.meta.preview_video || comp.meta.previewVideo || comp.meta.video || comp.meta.video_url)) ||
+                           '';
+
+            var previewVideo = extractMediaUrl(rawVideo);
+
+            var rawImage = comp['preview-image'] ||
+                           comp.preview_image ||
+                           comp.previewImage ||
+                           comp.thumbnail ||
+                           comp.image ||
+                           comp.image_url ||
+                           comp.preview_image_url ||
+                           (comp.acf && (comp.acf['preview-image'] || comp.acf.preview_image || comp.acf.previewImage || comp.acf.thumbnail || comp.acf.image || comp.acf.image_url)) ||
+                           (comp.meta && (comp.meta['preview-image'] || comp.meta.preview_image || comp.meta.previewImage || comp.meta.thumbnail || comp.meta.image)) ||
+                           '';
+
+            var thumbnail = extractMediaUrl(rawImage);
 
             var previewUrl = comp.preview_url || comp.url || '';
             var id = comp.id || '';
