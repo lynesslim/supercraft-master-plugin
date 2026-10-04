@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.1.8
+ * Version:     1.1.9
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.1.8');
+define('SCMP_VERSION', '1.1.9');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -323,6 +323,12 @@ function scmp_get_premium_plugins() {
             'zip_url'       => 'https://github.com/lynesslim/supercomponent-studio',
             'target_folder' => 'supercomponent-studio',
         ],
+        'supercraft-sitebuilder' => [
+            'name'          => 'Supercraft SiteBuilder',
+            'source'        => 'github',
+            'zip_url'       => 'https://github.com/lynesslim/supercraft-sitebuilder',
+            'target_folder' => 'supercraft-sitebuilder',
+        ],
         'proelements' => [
             'name'          => 'Pro Elements',
             'source'        => 'github',
@@ -463,6 +469,9 @@ function scmp_is_plugin_installed($slug) {
             return $plugin_file;
         }
         if ($slug === 'supercomponent-studio' && $file_base === 'supercomponent-studio.php') {
+            return $plugin_file;
+        }
+        if ($slug === 'supercraft-sitebuilder' && ($file_base === 'supercraft-sitebuilder.php' || $file_base === 'superdesign.php')) {
             return $plugin_file;
         }
         if ($slug === 'proelements' && $file_base === 'pro-elements.php') {

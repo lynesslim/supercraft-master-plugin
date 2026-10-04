@@ -18,6 +18,7 @@ services:
     container_name: supercraft_master_wordpress
     restart: always
     ports:
+      - "8890:80"
       - "8891:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
@@ -30,6 +31,8 @@ services:
       - .:/var/www/html/wp-content/plugins/supercraft-master-plugin
       # Mount the animation plugin directory
       - ../Supercraft Animation Plugin:/var/www/html/wp-content/plugins/supercraft-animation-plugin
+      # Mount SuperDesign (SiteBuilder) directly from workspace
+      - ../SuperDesign:/var/www/html/wp-content/plugins/supercraft-sitebuilder
       # Mount a local uploads directory so uploaded media persists
       - ./wp-uploads:/var/www/html/wp-content/uploads
 
