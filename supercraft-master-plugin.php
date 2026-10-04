@@ -25,6 +25,12 @@ if (file_exists(SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.p
         'supercraft-master-plugin'
     );
     $scmp_update_checker->setBranch('main');
+
+    // Set GitHub Personal Access Token if defined in wp-config.php or saved in settings (prevents 403 rate limit errors)
+    $githubToken = defined('SUPERCRAFT_GITHUB_TOKEN') ? SUPERCRAFT_GITHUB_TOKEN : get_option('supercraft_github_token', '');
+    if (!empty($githubToken)) {
+        $scmp_update_checker->setAuthentication($githubToken);
+    }
 }
 
 // ── Elementor Editor Assets ───────────────────────────────────────────
