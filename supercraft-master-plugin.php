@@ -24,6 +24,7 @@ if (file_exists(SCMP_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.p
         __FILE__,
         'supercraft-master-plugin'
     );
+    $scmp_update_checker->setBranch('main');
 }
 
 // ── Elementor Editor Assets ───────────────────────────────────────────
