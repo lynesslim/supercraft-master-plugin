@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.1.9
+ * Version:     1.2.0
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.1.9');
+define('SCMP_VERSION', '1.2.0');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -199,7 +199,40 @@ function scmp_ajax_supervault_proxy() {
         set_transient('scmp_sv_requirements', $data, 12 * HOUR_IN_SECONDS);
     }
 
+    if ($action_type === 'json' && is_array($data)) {
+        $data = scmp_clean_code_entities($data);
+    }
+
     wp_send_json_success($data);
+}
+
+/**
+ * Recursively decode HTML entities in code settings (js, css, html, custom_css).
+ */
+function scmp_clean_code_entities($item) {
+    if (!is_array($item)) {
+        return $item;
+    }
+    // Handle sequential arrays of elements
+    if (isset($item[0])) {
+        foreach ($item as $k => $child) {
+            $item[$k] = scmp_clean_code_entities($child);
+        }
+        return $item;
+    }
+    if (isset($item['settings']) && is_array($item['settings'])) {
+        foreach (['js', 'css', 'html', 'custom_css'] as $prop) {
+            if (isset($item['settings'][$prop]) && is_string($item['settings'][$prop])) {
+                $item['settings'][$prop] = html_entity_decode($item['settings'][$prop], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
+        }
+    }
+    if (isset($item['elements']) && is_array($item['elements'])) {
+        foreach ($item['elements'] as $k => $child) {
+            $item['elements'][$k] = scmp_clean_code_entities($child);
+        }
+    }
+    return $item;
 }
 
 // ── Push to SuperVault AJAX ────────────────────────────────────────────
@@ -241,6 +274,8 @@ function scmp_ajax_push_to_supervault() {
     if ($decoded === null) {
         wp_send_json_error(['message' => 'Invalid element JSON.']);
     }
+
+    $decoded = scmp_clean_code_entities($decoded);
 
     $license_key = get_option('supercraft_master_license_key', '');
     if (empty($license_key)) {

@@ -621,8 +621,39 @@
         $grid.html(html);
     }
 
+    function decodeHtmlEntities(str) {
+        if (typeof str !== 'string' || str.indexOf('&') === -1) {
+            return str;
+        }
+        var textarea = document.createElement('textarea');
+        textarea.innerHTML = str;
+        return textarea.value;
+    }
+
+    function sanitizeElementCode(el) {
+        if (!el || typeof el !== 'object') return el;
+        if (Array.isArray(el)) {
+            el.forEach(sanitizeElementCode);
+            return el;
+        }
+        if (el.settings && typeof el.settings === 'object') {
+            ['js', 'css', 'html', 'custom_css'].forEach(function (prop) {
+                if (typeof el.settings[prop] === 'string') {
+                    el.settings[prop] = decodeHtmlEntities(el.settings[prop]);
+                }
+            });
+        }
+        if (el.elements && Array.isArray(el.elements)) {
+            el.elements.forEach(function (child) {
+                sanitizeElementCode(child);
+            });
+        }
+        return el;
+    }
+
     function prepareElementForInsert(el, isNested) {
         var clone = $.extend(true, {}, el);
+        sanitizeElementCode(clone);
         clone.id = Math.random().toString(36).substr(2, 7);
         if (isNested && clone.elType === 'container') {
             clone.isInner = true;
@@ -806,7 +837,8 @@
         $card.addClass('scmp-copying');
 
         proxyRequest('json', { id: id }, function (data) {
-            var jsonStr = typeof data === 'object' ? JSON.stringify(data) : data;
+            var cleanData = (typeof data === 'object') ? sanitizeElementCode($.extend(true, {}, data)) : data;
+            var jsonStr = typeof cleanData === 'object' ? JSON.stringify(cleanData) : cleanData;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(jsonStr).then(function () {
@@ -948,6 +980,7 @@
         }
 
         var elementJson = model.toJSON();
+        sanitizeElementCode(elementJson);
         state.pendingElementJson = JSON.stringify(elementJson);
 
         var title = '';
