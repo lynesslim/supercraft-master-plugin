@@ -237,10 +237,29 @@
             }
             $btn.addClass('loading');
             loadCategories(true);
-            loadComponents();
+            loadComponents(true);
             setTimeout(function () {
                 $btn.removeClass('loading');
             }, 600);
+        });
+
+        // ── Video Hover-to-Play (Instant Poster + Zero Bandwidth Waste) ──
+        $(document).on('mouseenter', '.scmp-component-card', function () {
+            var video = $(this).find('video.scmp-card-thumb-video')[0];
+            if (video) {
+                var playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(function () {});
+                }
+            }
+        });
+
+        $(document).on('mouseleave', '.scmp-component-card', function () {
+            var video = $(this).find('video.scmp-card-thumb-video')[0];
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
         });
 
         // ── Publish Modal Events ──
@@ -348,8 +367,14 @@
         }
         $('#scmp-supervault-modal').fadeIn(200);
         $('body').css('overflow', 'hidden');
-        loadCategories();
-        loadComponents();
+
+        // Instant In-Memory Cache: if already loaded in memory, render immediately with 0ms delay!
+        if (state.allComponents && state.allComponents.length > 0) {
+            renderComponents();
+        } else {
+            loadCategories();
+            loadComponents();
+        }
 
         // Bind scroll event directly to the container since 'scroll' does not bubble
         $('.scmp-modal-body').off('scroll').on('scroll', function () {
@@ -454,7 +479,7 @@
         });
     }
 
-    function loadComponents() {
+    function loadComponents(forceRefresh) {
         var data = {};
         if (state.currentCategory && state.currentCategory !== 'all') {
             data.category = state.currentCategory;
@@ -462,9 +487,14 @@
         if (state.searchTerm) {
             data.search = state.searchTerm;
         }
+        if (forceRefresh) {
+            data.force_refresh = 'true';
+        }
 
         var $grid = $('#scmp-component-grid');
-        $grid.addClass('loading');
+        if (!state.allComponents || !state.allComponents.length || forceRefresh) {
+            $grid.addClass('loading');
+        }
 
         proxyRequest('components', data, function (components) {
             $grid.removeClass('loading');
@@ -593,7 +623,8 @@
                 html += '<span class="scmp-card-badge">' + firstTag + '</span>';
             }
             if (previewVideo) {
-                html += '<video class="scmp-card-thumb scmp-card-thumb-video" src="' + previewVideo + '" autoplay loop muted playsinline></video>';
+                var posterAttr = thumbnail ? ' poster="' + thumbnail + '"' : '';
+                html += '<video class="scmp-card-thumb scmp-card-thumb-video" src="' + previewVideo + '"' + posterAttr + ' preload="metadata" loop muted playsinline></video>';
             } else if (thumbnail) {
                 html += '<div class="scmp-card-thumb" style="background-image:url(' + thumbnail + ');"></div>';
             } else {

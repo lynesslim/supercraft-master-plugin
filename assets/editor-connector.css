@@ -235,22 +235,23 @@
     color: #121315;
 }
 
-/* ── Component Grid (3-Column Masonry) ───────────────────────────── */
+/* ── Component Grid (3-Column Grid) ──────────────────────────────── */
 
 .scmp-component-grid {
-    column-count: 3;
-    column-gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
 }
 
 @media (max-width: 1200px) {
     .scmp-component-grid {
-        column-count: 2;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
     .scmp-component-grid {
-        column-count: 1;
+        grid-template-columns: 1fr;
     }
 }
 
@@ -260,7 +261,7 @@
 }
 
 .scmp-empty-state {
-    column-span: all;
+    grid-column: 1 / -1;
     text-align: center;
     padding: 60px 20px;
     color: #7a7e85;
@@ -270,22 +271,21 @@
 /* ── Component Card ──────────────────────────────────────────────── */
 
 .scmp-component-card {
-    break-inside: avoid;
-    display: inline-block;
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    margin-bottom: 16px;
     background: #1a1b1e;
     border-radius: 8px;
     overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     border: 1px solid #2a2b2e;
-    vertical-align: top;
     box-sizing: border-box;
 }
 
 .scmp-component-card:hover {
     border-color: #3a3c42;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
 }
 
 .scmp-component-card.scmp-copying {
@@ -300,6 +300,8 @@
     position: relative;
     overflow: hidden;
     background: #121315;
+    aspect-ratio: 16 / 10;
+    width: 100%;
 }
 
 .scmp-card-badge {
@@ -320,8 +322,8 @@
 
 .scmp-card-thumb {
     width: 100%;
-    min-height: 160px;
-    background-size: contain;
+    height: 100%;
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     background-color: #121315;
@@ -331,9 +333,8 @@
 video.scmp-card-thumb,
 .scmp-card-thumb-video {
     width: 100%;
-    height: auto;
-    max-height: 400px;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
     background-color: #121315;
     display: block;
     pointer-events: none;

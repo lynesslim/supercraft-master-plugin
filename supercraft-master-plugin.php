@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.2.0
+ * Version:     1.2.1
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.2.0');
+define('SCMP_VERSION', '1.2.1');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -152,6 +152,18 @@ function scmp_ajax_supervault_proxy() {
             if (!empty($params)) {
                 $url = add_query_arg($params, $url);
             }
+
+            $cache_key = 'scmp_sv_comp_' . md5($url);
+            if (isset($_POST['force_refresh']) && $_POST['force_refresh'] === 'true') {
+                delete_transient($cache_key);
+            }
+            $bypass_cache = (defined('WP_DEBUG') && WP_DEBUG);
+            $cached_comps = $bypass_cache ? false : get_transient($cache_key);
+            if (false !== $cached_comps && is_array($cached_comps) && !isset($cached_comps['code']) && !isset($cached_comps['message'])) {
+                wp_send_json_success($cached_comps);
+            } else if (false !== $cached_comps) {
+                delete_transient($cache_key);
+            }
             break;
 
         case 'json':
@@ -197,6 +209,9 @@ function scmp_ajax_supervault_proxy() {
     }
     if ($action_type === 'requirements') {
         set_transient('scmp_sv_requirements', $data, 12 * HOUR_IN_SECONDS);
+    }
+    if ($action_type === 'components' && isset($cache_key)) {
+        set_transient($cache_key, $data, 2 * HOUR_IN_SECONDS);
     }
 
     if ($action_type === 'json' && is_array($data)) {
