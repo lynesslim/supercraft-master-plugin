@@ -129,11 +129,15 @@ function sv_traverse_and_heal(&$elements, &$healed_count) {
     }
 
     if (isset($elements['settings']) && is_array($elements['settings'])) {
-        // Also clean entities in all code fields
+        // Clean HTML entities in all code fields (js, css, html, custom_css)
         foreach (['js', 'css', 'html', 'custom_css'] as $prop) {
             if (isset($elements['settings'][$prop]) && is_string($elements['settings'][$prop])) {
                 $orig = $elements['settings'][$prop];
-                $elements['settings'][$prop] = html_entity_decode($orig, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $decoded = html_entity_decode($orig, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if ($decoded !== $orig) {
+                    $elements['settings'][$prop] = $decoded;
+                    $healed_count++;
+                }
             }
         }
 
@@ -156,15 +160,21 @@ function sv_traverse_and_heal(&$elements, &$healed_count) {
 
 global $wpdb;
 
-// Find only meta records that actually contain HTML widgets (filters down from thousands of posts)
+// Find meta records with either HTML widgets or entity-corrupted code fields
 $target_meta_rows = $wpdb->get_results("
     SELECT meta_id, post_id, meta_key 
     FROM {$wpdb->postmeta} 
     WHERE meta_key IN ('_elementor_data', 'elements_json', 'component_elements')
-      AND (meta_value LIKE '%\"widgetType\":\"html\"%' OR meta_value LIKE '%widgetType%html%')
+      AND (
+        meta_value LIKE '%&#039;%' 
+        OR meta_value LIKE '%&#39;%' 
+        OR meta_value LIKE '%&apos;%' 
+        OR meta_value LIKE '%&amp;&amp;%'
+        OR meta_value LIKE '%\"widgetType\":\"html\"%'
+      )
 ");
 
-echo "Found " . count($target_meta_rows) . " template records containing HTML widgets.\n\n";
+echo "Found " . count($target_meta_rows) . " template records to evaluate.\n\n";
 
 $repaired_posts = 0;
 $repaired_widgets = 0;
