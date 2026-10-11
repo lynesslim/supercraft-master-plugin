@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
     }
 }
 
-$dry_run = in_array('--dry-run', $argv ?? []);
+$dry_run = in_array('--dry-run', $argv ?? []) || in_array('dry-run', $argv ?? []);
 
 echo "========================================================\n";
 echo " SuperVault HTML Widget Restorer\n";
