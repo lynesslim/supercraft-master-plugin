@@ -160,16 +160,18 @@ function sv_traverse_and_heal(&$elements, &$healed_count) {
 
 global $wpdb;
 
-// Find meta records with either HTML widgets or entity-corrupted code fields
+// Find meta records with either HTML widgets or any entity-corrupted code fields
 $target_meta_rows = $wpdb->get_results("
     SELECT meta_id, post_id, meta_key 
     FROM {$wpdb->postmeta} 
     WHERE meta_key IN ('_elementor_data', 'elements_json', 'component_elements')
       AND (
-        meta_value LIKE '%&#039;%' 
-        OR meta_value LIKE '%&#39;%' 
+        meta_value LIKE '%&#%' 
         OR meta_value LIKE '%&apos;%' 
-        OR meta_value LIKE '%&amp;&amp;%'
+        OR meta_value LIKE '%&amp;%' 
+        OR meta_value LIKE '%&lt;%' 
+        OR meta_value LIKE '%&gt;%' 
+        OR meta_value LIKE '%&quot;%'
         OR meta_value LIKE '%\"widgetType\":\"html\"%'
       )
 ");
