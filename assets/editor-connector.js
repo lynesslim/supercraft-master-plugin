@@ -661,6 +661,75 @@
         return textarea.value;
     }
 
+    function restoreStrippedHtmlWidget(content) {
+        if (typeof content !== 'string' || !content.trim()) return content;
+
+        var hasStyle = /<style\b/i.test(content);
+        var hasScript = /<script\b/i.test(content);
+        if (hasStyle && hasScript) return content;
+
+        var raw = decodeHtmlEntities(content);
+
+        // JavaScript start patterns: (function, document.addEventListener, window.addEventListener, $(document).ready
+        var jsRegex = /(?:\n|^)[ \t]*(\(function\s*\(|document\.addEventListener|window\.addEventListener|\$\(document\)\.ready|jQuery\(document\)\.ready)/;
+        var jsPart = '';
+        var nonJsPart = raw;
+
+        if (!hasScript) {
+            var jsMatch = jsRegex.exec(raw);
+            if (jsMatch && jsMatch.index !== undefined) {
+                var jsOffset = jsMatch.index;
+                nonJsPart = raw.substring(0, jsOffset);
+                jsPart = raw.substring(jsOffset).trim();
+            }
+        }
+
+        var cssPart = '';
+        var htmlPart = '';
+
+        if (!hasStyle) {
+            var trimmedNonJs = nonJsPart.trim();
+            if (/^\s*<[a-z][a-z0-9]*\b/i.test(trimmedNonJs)) {
+                // Starts with HTML tag, followed by CSS
+                var splitMatch = /(<\/([a-z][a-z0-9]*)>\s*)((?:\/\*[\s\S]*?\*\/\s*)*(\.[a-zA-Z0-9_-]+|\#[a-zA-Z0-9_-]+|@media|@keyframes)\s*\{)/i.exec(trimmedNonJs);
+                if (splitMatch && splitMatch.index !== undefined) {
+                    var cssIndex = trimmedNonJs.indexOf(splitMatch[3]);
+                    htmlPart = trimmedNonJs.substring(0, cssIndex).trim();
+                    cssPart = trimmedNonJs.substring(cssIndex).trim();
+                } else {
+                    htmlPart = trimmedNonJs;
+                }
+            } else {
+                // Starts with CSS (or pure CSS). Check if HTML follows.
+                var htmlTagMatch = /(?:\n|^)[ \t]*(?:<!--[\s\S]*?-->\s*)*<[a-z][a-z0-9]*\b[^>]*>/i.exec(trimmedNonJs);
+                if (htmlTagMatch && htmlTagMatch.index !== undefined) {
+                    var candidateCss = trimmedNonJs.substring(0, htmlTagMatch.index).trim();
+                    if (candidateCss.indexOf('{') !== -1 && candidateCss.indexOf('}') !== -1) {
+                        cssPart = candidateCss;
+                        htmlPart = trimmedNonJs.substring(htmlTagMatch.index).trim();
+                    } else {
+                        htmlPart = trimmedNonJs;
+                    }
+                } else {
+                    if (trimmedNonJs.indexOf('{') !== -1 && trimmedNonJs.indexOf('}') !== -1) {
+                        cssPart = trimmedNonJs;
+                    } else {
+                        htmlPart = trimmedNonJs;
+                    }
+                }
+            }
+        } else {
+            htmlPart = nonJsPart;
+        }
+
+        var parts = [];
+        if (cssPart) parts.push('<style>\n' + cssPart + '\n</style>');
+        if (htmlPart) parts.push(htmlPart);
+        if (jsPart) parts.push('<script>\n' + jsPart + '\n</script>');
+
+        return parts.length > 0 ? parts.join('\n\n') : content;
+    }
+
     function sanitizeElementCode(el) {
         if (!el || typeof el !== 'object') return el;
         if (Array.isArray(el)) {
@@ -673,6 +742,9 @@
                     el.settings[prop] = decodeHtmlEntities(el.settings[prop]);
                 }
             });
+            if (el.widgetType === 'html' && typeof el.settings.html === 'string') {
+                el.settings.html = restoreStrippedHtmlWidget(el.settings.html);
+            }
         }
         if (el.elements && Array.isArray(el.elements)) {
             el.elements.forEach(function (child) {

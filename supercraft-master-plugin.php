@@ -3,7 +3,7 @@
  * Plugin Name: Supercraft Master Plugin
  * Plugin URI:  https://supercraft.my
  * Description: Centralized license validation, onboarding, and plugin provisioning for the Supercraft ecosystem.
- * Version:     1.2.1
+ * Version:     1.2.2
  * Author:      Supercraft
  * Author URI:  https://supercraft.my
  * License:     GPL v2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCMP_VERSION', '1.2.1');
+define('SCMP_VERSION', '1.2.2');
 define('SCMP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SCMP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -222,7 +222,7 @@ function scmp_ajax_supervault_proxy() {
 }
 
 /**
- * Recursively decode HTML entities in code settings (js, css, html, custom_css).
+ * Recursively decode HTML entities in code settings and heal stripped HTML widgets.
  */
 function scmp_clean_code_entities($item) {
     if (!is_array($item)) {
@@ -241,6 +241,10 @@ function scmp_clean_code_entities($item) {
                 $item['settings'][$prop] = html_entity_decode($item['settings'][$prop], ENT_QUOTES | ENT_HTML5, 'UTF-8');
             }
         }
+        // If element is an HTML widget whose <style> or <script> tags were stripped by WordPress KSES, restore them
+        if (isset($item['widgetType']) && $item['widgetType'] === 'html' && isset($item['settings']['html']) && is_string($item['settings']['html'])) {
+            $item['settings']['html'] = scmp_restore_stripped_html_widget($item['settings']['html']);
+        }
     }
     if (isset($item['elements']) && is_array($item['elements'])) {
         foreach ($item['elements'] as $k => $child) {
@@ -248,6 +252,84 @@ function scmp_clean_code_entities($item) {
         }
     }
     return $item;
+}
+
+/**
+ * Reconstructs missing <style> and <script> tags in Elementor HTML widgets if stripped by KSES sanitization.
+ */
+function scmp_restore_stripped_html_widget($content) {
+    if (!is_string($content) || trim($content) === '') {
+        return $content;
+    }
+
+    $has_style = stripos($content, '<style') !== false;
+    $has_script = stripos($content, '<script') !== false;
+    if ($has_style && $has_script) {
+        return $content;
+    }
+
+    $raw = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    // JavaScript start entry points
+    $js_regex = '/(?:\n|^)[ \t]*(\(function\s*\(|document\.addEventListener|window\.addEventListener|\$\(document\)\.ready|jQuery\(document\)\.ready)/';
+    $js_part = '';
+    $non_js_part = $raw;
+
+    if (!$has_script && preg_match($js_regex, $raw, $matches, PREG_OFFSET_CAPTURE)) {
+        $js_offset = $matches[0][1];
+        $non_js_part = substr($raw, 0, $js_offset);
+        $js_part = trim(substr($raw, $js_offset));
+    }
+
+    $css_part = '';
+    $html_part = '';
+
+    if (!$has_style) {
+        $trimmed_non_js = trim($non_js_part);
+        // Case A: Starts with HTML tag, followed by CSS
+        if (preg_match('/^\s*<[a-z][a-z0-9]*\b/i', $trimmed_non_js)) {
+            if (preg_match('/(<\/([a-z][a-z0-9]*)>\s*)((?:\/\*[\s\S]*?\*\/\s*)*(\.[a-zA-Z0-9_-]+|\#[a-zA-Z0-9_-]+|@media|@keyframes)\s*\{)/i', $trimmed_non_js, $m, PREG_OFFSET_CAPTURE)) {
+                $css_start = $m[3][1];
+                $html_part = trim(substr($trimmed_non_js, 0, $css_start));
+                $css_part = trim(substr($trimmed_non_js, $css_start));
+            } else {
+                $html_part = $trimmed_non_js;
+            }
+        } else {
+            // Case B: Starts with CSS (or pure CSS). Check if HTML follows.
+            if (preg_match('/(?:\n|^)[ \t]*(?:<!--[\s\S]*?-->\s*)*<[a-z][a-z0-9]*\b[^>]*>/i', $trimmed_non_js, $m, PREG_OFFSET_CAPTURE)) {
+                $html_start = $m[0][1];
+                $candidate_css = trim(substr($trimmed_non_js, 0, $html_start));
+                if (strpos($candidate_css, '{') !== false && strpos($candidate_css, '}') !== false) {
+                    $css_part = $candidate_css;
+                    $html_part = trim(substr($trimmed_non_js, $html_start));
+                } else {
+                    $html_part = $trimmed_non_js;
+                }
+            } else {
+                if (strpos($trimmed_non_js, '{') !== false && strpos($trimmed_non_js, '}') !== false) {
+                    $css_part = $trimmed_non_js;
+                } else {
+                    $html_part = $trimmed_non_js;
+                }
+            }
+        }
+    } else {
+        $html_part = $non_js_part;
+    }
+
+    $reconstructed = [];
+    if ($css_part !== '') {
+        $reconstructed[] = "<style>\n" . $css_part . "\n</style>";
+    }
+    if ($html_part !== '') {
+        $reconstructed[] = $html_part;
+    }
+    if ($js_part !== '') {
+        $reconstructed[] = "<script>\n" . $js_part . "\n</script>";
+    }
+
+    return !empty($reconstructed) ? implode("\n\n", $reconstructed) : $content;
 }
 
 // ── Push to SuperVault AJAX ────────────────────────────────────────────
