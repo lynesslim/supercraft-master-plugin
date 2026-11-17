@@ -468,6 +468,12 @@ function scmp_get_premium_plugins() {
             'zip_url'       => 'https://github.com/lynesslim/supercraft-sitebuilder',
             'target_folder' => 'supercraft-sitebuilder',
         ],
+        'supercraft-agent' => [
+            'name'          => 'SuperAgent',
+            'source'        => 'github',
+            'zip_url'       => 'https://github.com/lynesslim/supercraft-agent',
+            'target_folder' => 'supercraft-agent',
+        ],
         'proelements' => [
             'name'          => 'Pro Elements',
             'source'        => 'github',
@@ -611,6 +617,9 @@ function scmp_is_plugin_installed($slug) {
             return $plugin_file;
         }
         if ($slug === 'supercraft-sitebuilder' && ($file_base === 'supercraft-sitebuilder.php' || $file_base === 'superdesign.php')) {
+            return $plugin_file;
+        }
+        if ($slug === 'supercraft-agent' && $file_base === 'supercraft-agent.php') {
             return $plugin_file;
         }
         if ($slug === 'proelements' && $file_base === 'pro-elements.php') {
